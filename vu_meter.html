@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bass & Treble VU Metre</title>
+    <style>
+        body {
+            background-color: #1d1d1d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .vu-container {
+            display: flex;
+            justify-content: space-around;
+            width: 600px;
+        }
+        canvas {
+            background-color: #002200;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        audio {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="vu-container">
+        <canvas id="bass-vu" width="270" height="200"></canvas>
+        <canvas id="treble-vu" width="270" height="200"></canvas>
+    </div>
+    <div id="container">
+        <audio id="audio" controls>
+            <source src="muzik/Yalanmış Meğer(MP3_160K).mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <script>
+        const bassCanvas = document.getElementById('bass-vu');
+        const bassCtx = bassCanvas.getContext('2d');
+        const trebleCanvas = document.getElementById('treble-vu');
+        const trebleCtx = trebleCanvas.getContext('2d');
+        const audio = document.getElementById('audio');
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        let currentBassAngle = Math.PI; // Initial angle of the bass needle
+        let currentTrebleAngle = Math.PI; // Initial angle of the treble needle
+
+        function drawMeter(ctx, currentAngle, meterType) {
+            ctx.clearRect(0, 0, bassCanvas.width, bassCanvas.height);
+
+            // Background
+            ctx.fillStyle = '#002200';
+            ctx.fillRect(0, 0, bassCanvas.width, bassCanvas.height);
+
+            // Outer circle
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(100, 160, 80, Math.PI, 2 * Math.PI);
+            ctx.stroke();
+
+            // Scale markers
+            const scaleMarkers = [0.1, 0.5, 1, 5, 10, 50, 70, 200, 500];
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#00ff00';
+            ctx.textAlign = 'center';
+            scaleMarkers.forEach((value, i) => {
+                const angle = Math.PI + i * (Math.PI / (scaleMarkers.length - 1));
+                const x = 100 + Math.cos(angle) * 100;
+                const y = 160 + Math.sin(angle) * 100;
+                ctx.fillText(value, x, y);
+            });
+
+            // Draw needle
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(100, 160);
+            ctx.lineTo(100 + Math.cos(currentAngle) * 80, 160 + Math.sin(currentAngle) * 80);
+            ctx.stroke();
+
+            // Meter type label
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText(meterType, 100, 180);
+        }
+
+        function drawVU() {
+            analyser.getByteFrequencyData(dataArray);
+
+            // Calculate bass (low frequencies) and treble (high frequencies) average
+            let bassSum = 0, trebleSum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                if (i < bufferLength / 4) { // Bass (low frequency range)
+                    bassSum += dataArray[i];
+                } else if (i > bufferLength * 3 / 4) { // Treble (high frequency range)
+                    trebleSum += dataArray[i];
+                }
+            }
+
+            let bassAverage = bassSum / (bufferLength / 4);
+            let trebleAverage = trebleSum / (bufferLength / 4);
+
+            // Calculate target angles for bass and treble needles
+            let targetBassAngle = Math.PI + (bassAverage / 256) * Math.PI;
+            let targetTrebleAngle = Math.PI + (trebleAverage / 256) * Math.PI;
+
+            // Smooth needle transition
+            const smoothingFactor = 0.05;
+            currentBassAngle += (targetBassAngle - currentBassAngle) * smoothingFactor;
+            currentTrebleAngle += (targetTrebleAngle - currentTrebleAngle) * smoothingFactor;
+
+            // Draw bass and treble meters
+            drawMeter(bassCtx, currentBassAngle, 'Bass');
+            drawMeter(trebleCtx, currentTrebleAngle, 'Treble');
+
+            requestAnimationFrame(drawVU);
+        }
+
+        // Start the meter animation when audio starts playing
+        audio.addEventListener('play', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            drawVU();
+        });
+    </script>
+</body>
+</html>
