@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,25 +14,54 @@
             align-items: center;
             height: 100vh;
         }
+
         .vu-container {
             display: flex;
             justify-content: space-around;
-            width: 600px;
+            align-items: center;
+            max-width: 600px;
+            /* Maksimum genişliği ayarladık */
+            margin: 20 auto;
+            padding: 20px;
+            /* Çevresine boşluk ekledik */
         }
+
         canvas {
             background-color: #002200;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            margin: 20px;
+            /* Daha estetik görünüm için padding ekledik */
         }
+
+
         #container {
             text-align: center;
             margin-top: 20px;
         }
+
         audio {
             margin-top: 10px;
         }
+        
+        .mp3-player-link {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #00ff00;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .mp3-player-link:hover {
+            background-color: #009900;
+        }
     </style>
 </head>
+
 <body>
     <div class="vu-container">
         <canvas id="bass-vu" width="270" height="200"></canvas>
@@ -74,7 +104,7 @@
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.arc(100, 160, 80, Math.PI, 2 * Math.PI);
+            ctx.arc(135, 160, 80, Math.PI, 2 * Math.PI); // Merkezi 135, 160 yaptık
             ctx.stroke();
 
             // Scale markers
@@ -84,7 +114,7 @@
             ctx.textAlign = 'center';
             scaleMarkers.forEach((value, i) => {
                 const angle = Math.PI + i * (Math.PI / (scaleMarkers.length - 1));
-                const x = 100 + Math.cos(angle) * 100;
+                const x = 135 + Math.cos(angle) * 100; // 100 yerine 135
                 const y = 160 + Math.sin(angle) * 100;
                 ctx.fillText(value, x, y);
             });
@@ -93,14 +123,14 @@
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(100, 160);
-            ctx.lineTo(100 + Math.cos(currentAngle) * 80, 160 + Math.sin(currentAngle) * 80);
+            ctx.moveTo(135, 160); // 100 yerine 135
+            ctx.lineTo(135 + Math.cos(currentAngle) * 80, 160 + Math.sin(currentAngle) * 80);
             ctx.stroke();
 
             // Meter type label
             ctx.font = '16px Arial';
             ctx.fillStyle = '#00ff00';
-            ctx.fillText(meterType, 100, 180);
+            ctx.fillText(meterType, 135, 180); // 100 yerine 135
         }
 
         function drawVU() {
@@ -144,4 +174,5 @@
         });
     </script>
 </body>
+
 </html>
